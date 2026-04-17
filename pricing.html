@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>服务价格对比</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f0f4f8;
+      color: #1a202c;
+      min-height: 100vh;
+      padding: 60px 20px;
+    }
+
+    .page-header {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+    .page-header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      color: #1a202c;
+    }
+    .page-header p {
+      margin-top: 12px;
+      font-size: 1.05rem;
+      color: #718096;
+    }
+
+    .pricing-grid {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 40px 32px 36px;
+      width: 320px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 2px 12px rgba(0,0,0,.07);
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 28px rgba(0,0,0,.12);
+    }
+
+    /* highlighted card */
+    .card.popular {
+      background: linear-gradient(160deg, #4f46e5 0%, #7c3aed 100%);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(79,70,229,.35);
+      border: 3px solid #f59e0b;
+      outline: 1px solid rgba(245,158,11,.4);
+    }
+
+    .badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #f59e0b;
+      color: #fff;
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      padding: 4px 16px;
+      border-radius: 99px;
+      white-space: nowrap;
+    }
+
+    .tier-name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      background: #1a3a6b;
+      color: #fff;
+      /* extend edge-to-edge inside the card */
+      margin: -40px -32px 0;
+      padding: 18px 32px;
+      border-radius: 16px 16px 0 0;
+    }
+    .card.popular .tier-name {
+      background: rgba(255,255,255,.18);
+      color: #fff;
+    }
+
+    .price-wrap {
+      margin-top: 20px;
+    }
+    .price {
+      font-size: 4rem;
+      font-weight: 900;
+      line-height: 1;
+      letter-spacing: -.02em;
+    }
+    .price sup {
+      font-size: 1.4rem;
+      font-weight: 700;
+      vertical-align: super;
+      line-height: 1;
+    }
+    .price-period {
+      font-size: .9rem;
+      color: #718096;
+      margin-top: 4px;
+    }
+    .card.popular .price-period { color: rgba(255,255,255,.7); }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #e2e8f0;
+      margin: 28px 0;
+    }
+    .card.popular .divider { border-color: rgba(255,255,255,.2); }
+
+    .feature-list {
+      list-style: none;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .feature-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: .95rem;
+      color: #4a5568;
+    }
+    .card.popular .feature-list li { color: rgba(255,255,255,.9); }
+
+    .feature-list li .icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .7rem;
+      margin-top: 1px;
+    }
+    .icon.yes { background: #c6f6d5; color: #276749; }
+    .icon.no  { background: #fed7d7; color: #9b2c2c; }
+    .card.popular .icon.yes { background: rgba(255,255,255,.25); color: #fff; }
+    .card.popular .icon.no  { background: rgba(255,255,255,.12); color: rgba(255,255,255,.5); }
+    .feature-list li.disabled { opacity: .45; }
+
+    .btn {
+      margin-top: 32px;
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .15s;
+    }
+    .btn:hover { transform: scale(1.02); }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid #4f46e5;
+      color: #4f46e5;
+    }
+    .btn-outline:hover { background: #4f46e5; color: #fff; }
+
+    .btn-primary {
+      background: #fff;
+      color: #4f46e5;
+    }
+    .btn-primary:hover { background: #eef2ff; }
+
+    .note {
+      text-align: center;
+      margin-top: 48px;
+      font-size: .85rem;
+      color: #a0aec0;
+    }
+
+    /* ── 功能详情区域 ── */
+    .detail-section {
+      max-width: 1100px;
+      margin: 64px auto 0;
+    }
+    .detail-title {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 32px;
+    }
+    .detail-grid {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .detail-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 28px 28px 32px;
+      width: 320px;
+      flex-shrink: 0;
+      box-shadow: 0 2px 10px rgba(0,0,0,.06);
+      border-top: 4px solid #cbd5e0;
+    }
+    .detail-card.highlight {
+      border-top: 4px solid #f59e0b;
+      box-shadow: 0 4px 20px rgba(245,158,11,.18);
+    }
+
+    .detail-tier {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #1a3a6b;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .popular-tier { color: #4f46e5; }
+
+    .detail-badge {
+      font-size: .7rem;
+      font-weight: 700;
+      background: #f59e0b;
+      color: #fff;
+      padding: 2px 10px;
+      border-radius: 99px;
+      letter-spacing: .05em;
+    }
+
+    .detail-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .detail-list li {
+      font-size: .92rem;
+      color: #4a5568;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+    .detail-list li::before {
+      content: "•";
+      position: absolute;
+      left: 4px;
+      color: #a0aec0;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+    .detail-card.highlight .detail-list li::before {
+      color: #f59e0b;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="page-header">
+    <h1>选择适合您的套餐</h1>
+    <p>灵活定价，按需选择，随时升级或降级</p>
+  </header>
+
+  <div class="pricing-grid">
+
+    <!-- 基础版 -->
+    <div class="card">
+      <span class="tier-name">基础版</span>
+      <div class="price-wrap">
+        <div class="price"><sup>¥</sup>29</div>
+        <div class="price-period">每月</div>
+      </div>
+      <hr class="divider" />
+      <ul class="feature-list">
+        <li><span class="icon yes">✓</span>1 个用户账号</li>
+        <li><span class="icon yes">✓</span>5 GB 云存储空间</li>
+        <li><span class="icon yes">✓</span>每月 10,000 次 API 调用</li>
+        <li><span class="icon yes">✓</span>邮件支持（48h 响应）</li>
+        <li class="disabled"><span class="icon no">✗</span>高级数据分析</li>
+        <li class="disabled"><span class="icon no">✗</span>自定义域名</li>
+        <li class="disabled"><span class="icon no">✗</span>专属客户经理</li>
+      </ul>
+      <button class="btn btn-outline" onclick="handleSelect('基础版')">立即选择</button>
+    </div>
+
+    <!-- 标准版（推荐） -->
+    <div class="card popular">
+      <span class="badge">最受欢迎</span>
+      <span class="tier-name">标准版</span>
+      <div class="price-wrap">
+        <div class="price"><sup>¥</sup>99</div>
+        <div class="price-period">每月</div>
+      </div>
+      <hr class="divider" />
+      <ul class="feature-list">
+        <li><span class="icon yes">✓</span>5 个用户账号</li>
+        <li><span class="icon yes">✓</span>50 GB 云存储空间</li>
+        <li><span class="icon yes">✓</span>每月 100,000 次 API 调用</li>
+        <li><span class="icon yes">✓</span>优先邮件支持（12h 响应）</li>
+        <li><span class="icon yes">✓</span>高级数据分析</li>
+        <li><span class="icon yes">✓</span>自定义域名</li>
+        <li class="disabled"><span class="icon no">✗</span>专属客户经理</li>
+      </ul>
+      <button class="btn btn-primary" onclick="handleSelect('标准版')">立即选择</button>
+    </div>
+
+    <!-- 高级版 -->
+    <div class="card">
+      <span class="tier-name">高级版</span>
+      <div class="price-wrap">
+        <div class="price"><sup>¥</sup>299</div>
+        <div class="price-period">每月</div>
+      </div>
+      <hr class="divider" />
+      <ul class="feature-list">
+        <li><span class="icon yes">✓</span>无限用户账号</li>
+        <li><span class="icon yes">✓</span>500 GB 云存储空间</li>
+        <li><span class="icon yes">✓</span>无限 API 调用</li>
+        <li><span class="icon yes">✓</span>7×24 电话 &amp; 在线支持</li>
+        <li><span class="icon yes">✓</span>高级数据分析</li>
+        <li><span class="icon yes">✓</span>自定义域名</li>
+        <li><span class="icon yes">✓</span>专属客户经理</li>
+      </ul>
+      <button class="btn btn-outline" onclick="handleSelect('高级版')">立即选择</button>
+    </div>
+
+  </div>
+
+  <p class="note">所有套餐均含 14 天免费试用 · 无需信用卡 · 随时取消</p>
+
+  <section class="detail-section">
+    <h2 class="detail-title">套餐功能详情</h2>
+    <div class="detail-grid">
+
+      <div class="detail-card">
+        <h3 class="detail-tier">基础版</h3>
+        <ul class="detail-list">
+          <li>1 个用户账号</li>
+          <li>5 GB 云存储空间</li>
+          <li>每月 10,000 次 API 调用</li>
+          <li>标准数据报表（每日刷新）</li>
+          <li>邮件工单支持，48 小时内响应</li>
+          <li>基础安全加密（TLS 1.2）</li>
+          <li>移动端 App 访问</li>
+        </ul>
+      </div>
+
+      <div class="detail-card highlight">
+        <h3 class="detail-tier popular-tier">标准版 <span class="detail-badge">推荐</span></h3>
+        <ul class="detail-list">
+          <li>5 个用户账号</li>
+          <li>50 GB 云存储空间</li>
+          <li>每月 100,000 次 API 调用</li>
+          <li>高级数据分析与可视化图表</li>
+          <li>优先邮件支持，12 小时内响应</li>
+          <li>自定义独立域名绑定</li>
+          <li>高级安全加密（TLS 1.3 + AES-256）</li>
+          <li>移动端 App 访问</li>
+          <li>团队协作与权限管理</li>
+          <li>Webhook 与第三方集成</li>
+        </ul>
+      </div>
+
+      <div class="detail-card">
+        <h3 class="detail-tier">高级版</h3>
+        <ul class="detail-list">
+          <li>无限用户账号</li>
+          <li>500 GB 云存储空间</li>
+          <li>无限 API 调用</li>
+          <li>全套数据分析 + 自定义报表导出</li>
+          <li>7×24 电话 &amp; 在线即时支持</li>
+          <li>专属客户经理一对一服务</li>
+          <li>自定义域名 + 白标品牌定制</li>
+          <li>企业级安全（SSO / SAML / 2FA）</li>
+          <li>移动端 App 访问</li>
+          <li>高级团队协作与细粒度权限</li>
+          <li>Webhook、REST API 与企业集成</li>
+          <li>SLA 99.99% 可用性保障</li>
+        </ul>
+      </div>
+
+    </div>
+  </section>
+
+  <script>
+    function handleSelect(tier) {
+      alert('您已选择「' + tier + '」，感谢您的支持！');
+    }
+  </script>
+
+</body>
+</html>
